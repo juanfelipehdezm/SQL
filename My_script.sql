@@ -63,19 +63,78 @@ WHERE Precio = (SELECT MAX(Precio) FROM Servicios)
 GO
 
 /*10. Realice una consulta en donde detalle la siguiente información:
-• País
-• Nombre
-• Apellido1
-• Apellido2
-• Teléfono
-• Código Reserva
-• Número de la habitación reservada
-• Fecha de entrada
-• Fecha de salida
-• Precio de la habitación + IVA
-• Nombre de los servicios que consumió
-• Total de los gastos (servicios que solicito durante el hospedaje)
-• Total a pagar
-• Tipo de la habitación
-• Temporada si es (B,M,A)*/
+• País DONE
+• Nombre DONE
+• Apellido1 DONE
+• Apellido2 DONE
+• Teléfono DONE
+• Código Reserva DONE
+• Número de la habitación reservada DONE
+• Fecha de entrada DONE
+• Fecha de salida DONE
+• Precio de la habitación + IVA DONE
+• Nombre de los servicios que consumió DONE
+• Total de los gastos (servicios que solicito durante el hospedaje) DONE
+• Total a pagar DONE 
+• Tipo de la habitación   DONE
+• Temporada si es (B,M,A)
+*/ 
+WITH countries_cliente AS (
+    SELECT p.Pais,c.Nombre,c.Apellido1,c.Apellido2,c.Telefono,c.CodClientes
+    FROM Paises AS p
+    INNER JOIN Clientes AS c
+    ON p.CodPais = c.CodPais
+	                      ),
+reservas AS (
+    SELECT *
+	FROM countries_cliente AS cc
+	INNER JOIN Reserva_Habitacion AS rh
+	ON cc.CodClientes = rh.CodCliente
+	        ),
+num_habi AS (
+    SELECT r.Pais,r.Nombre,r.Apellido1,r.Apellido2,r.Telefono,r.CodReserva,r.CodCliente,r.FechaEntrada,r.FechaSalida,
+	       h.CodCategoria AS Tipo_habitacion,h.NumHabitacion
+	FROM reservas AS r
+	INNER JOIN Habitaciones AS h 
+	ON r.CodHabitacion = h.NumHabitacion
+	        ),
+season AS (
+    SELECT *,
+        CASE WHEN MONTH(FechaEntrada) BETWEEN 01 AND 03 THEN 1
+	         WHEN MONTH(FechaEntrada) BETWEEN 04 AND 05 THEN 2
+		     WHEN MONTH(FechaEntrada) BETWEEN 06 AND 08 THEN 3
+		     WHEN MONTH(FechaEntrada) BETWEEN 06 AND 08 THEN 4
+		     ELSE 5 END AS Cual_temporada
+    FROM num_habi
+          ),
+precio AS (
+    SELECT s.Pais,s.Nombre,s.Apellido1,s.Apellido2,s.Telefono,s.CodReserva,s.CodCliente,s.FechaEntrada,s.FechaSalida,s.Tipo_habitacion,
+           s.NumHabitacion, ph.Precio*(1.07) AS Precio_hab, ph.CodTemporada
+    FROM season as s
+    INNER JOIN Precio_Habitacion AS ph
+    ON s.Cual_temporada = ph.CodTemporada AND s.Tipo_habitacion = ph.Tipo_Habitacion
+          ),
+servicios_ga AS (
+    SELECT DISTINCT p.Pais,p.Nombre,p.Apellido1,p.Apellido2,p.Telefono,p.CodReserva,p.CodCliente,p.FechaEntrada,p.FechaSalida,p.Tipo_habitacion,
+	       p.NumHabitacion,p.Precio_hab,p.CodTemporada, ISNULL(g.Precio*(1.07),0) AS gastos_servi,se.Descripcion
+    FROM precio AS p
+	LEFT JOIN Gastos AS g
+	ON p.CodReserva = g.CodReserva
+	LEFT JOIN Servicios AS se
+	ON g.CodServicios = se.CodServicios
+	            )
+SELECT *, Precio_hab + gastos_servi AS total_pagar, 
+    CASE  WHEN MONTH(FechaEntrada) IN (01,02,03,11,12) THEN 'B'
+	      WHEN MONTH(FechaEntrada) IN (04,05,09,10) THEN 'M'
+		  ELSE 'A' END AS Tipo_Temporada
+FROM servicios_ga
+
+/* 11. Realice una consulta en donde se liste el último servicio solicitado por los clientes (tabla de referencia es
+gastos con la columna Fecha y la tabla servicios). Restricción: Se debe realizar la consulta sin hacer uso del
+filtro fecha y la clausula TOP Ejm: where Fecha:’xxxxx’ o select top 1. */
+
+SELECT s.Descripcion,g.Fecha
+FROM Gastos AS g
+INNER JOIN Servicios AS s
+ON g.CodServicios = s.CodServicios
 
