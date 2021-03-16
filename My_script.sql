@@ -138,7 +138,7 @@ FROM Gastos AS g
 INNER JOIN Servicios AS s
 ON g.CodServicios = s.CodServicios
 
-/* another exercise 
+/* another exercise*/
 SELECT c.NAME,o.PRICE
 FROM CUSTOMERS AS c
 INNER JOIN ORDERS AS o
