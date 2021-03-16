@@ -138,3 +138,16 @@ FROM Gastos AS g
 INNER JOIN Servicios AS s
 ON g.CodServicios = s.CodServicios
 
+/* another exercise 
+SELECT c.NAME,o.PRICE
+FROM CUSTOMERS AS c
+INNER JOIN ORDERS AS o
+ON c.ORDER_ID = o.ID
+WHERE YEAR(o.ORDER_DATE) < 1980
+ORDER BY o.PRICE DESC
+LIMIT 1;
+
+
+
+
+
